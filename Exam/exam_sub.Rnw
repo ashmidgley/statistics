@@ -1,0 +1,426 @@
+\documentclass[11pt,answers,addpoints,a4paper]{exam}
+% \documentclass[12pt,addpoints]{exam}
+
+\RequirePackage{times}
+\RequirePackage{mathpazo}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[latin1]{inputenc}
+\RequirePackage{amsmath}
+\RequirePackage{amsfonts}
+\RequirePackage{amssymb}
+\RequirePackage{amsthm}
+\usepackage{mathtools} 
+\usepackage{bm}
+
+\title{STAT 380: Computational Statistics\\
+  {\sc \the\year{} Final Examination}\\\vspace{1cm}
+Student Solution Document}
+\date{}
+
+%\usepackage{clipboard}
+%\newclipboard{myclipboard}
+
+
+\newcommand{\usp}{\underline{\hspace{.25in}}}
+\newcommand{\blank}{\underline{\hspace{2in}}}
+\newcommand{\Var}{\mbox{Var}}
+\newcommand{\todi}{\overset{\mathcal{D}}{\to}}
+\newcommand{\topr}{\overset{\mathcal{P}}{\to}}
+
+\marksnotpoints
+%\pointsinrightmargin 
+\marginpointname{ \points}
+\bracketedpoints
+\extrawidth{-0.2cm}
+\pointformat{\footnotesize [\themarginpoints]}
+
+%\firstpagefooter{}{Page \thepage}{}
+\begin{document}
+<<echo=FALSE,results='hide',warning=F,message=F>>=
+options(width=80)
+opts_chunk$set(tidy=TRUE,tidy.opts=list(width.cutoff=50))
+require(xtable)
+@
+<<include=FALSE>>= 
+knit_hooks$set(document=function(x){ 
+  sub('\\usepackage{framed}', '', x, fixed=TRUE) 
+}) 
+# needed to avoid framed being called -- exam class oddity 
+@ 
+
+%% Titlepage
+\maketitle
+
+\begin{center}
+\begin{Large}
+Time allowed: 3 Hours
+\end{Large}\\
+%
+\vspace{1 cm}
+%
+This examination paper comprises \numpages ~pages.\\
+Answer ALL questions. \\
+The marks total \numpoints.
+\end{center}
+%
+\vspace{2cm}
+\begin{center}
+\begin{Large}
+Name: Ash Midgley
+\end{Large}
+\end{center}
+
+\thispagestyle{empty}
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Students enter solutions below %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{questions}
+\question   Two people decide to play a dice rolling game.  Each player has a die that they roll $n$ times.  The winner is the player with the highest mean value after $n$ rolls.  The two players decide to make it a race, checking the mean value after each roll to determine who is in the lead.
+
+
+  
+\begin{parts}
+\part[2] Write a function that simulates $n=30$ die rolls for each player.  The only input should be the value $n$.  The output should be a vector of $n$ rolls for each player.  Test your function for $n=30$.
+<<>>=
+rolls = function(n){
+  p1 = rep(NA, n)
+  p2 = rep(NA, n)
+  for(i in 1:n){
+        r1 = sample(1:6, 1)
+        p1[i] = r1
+        r2 = sample(1:6, 1)
+        p2[i] = r2 
+  }
+  return(list(p1, p2))
+}
+rolls(30)
+@
+\part[2] Write a function to find the mean values.  The input is a single vector that contains the realization of a sequence of $n$ die rolls.  The output is a vector of length $n$ that gives the mean value after each roll (i.e. the $i$th element of the vector is the mean value of all rolls up to an including the $i$th roll). Test your function using the input vector $x$ below.
+
+<<>>=
+x = c(1,3,5,5,2,1,1,3,4,1,6,6,4,6,5,2,5,3,3,4,6,3,1,1,1,4,6,5,2,4)
+@
+
+<<>>=
+findMeans = function(vec){
+  n = length(vec)
+  meanvec = rep(NA, n)
+  for(i in 1:n){
+    meanvec[i] = mean(vec[1:i])
+  }
+  return(meanvec)
+}
+findMeans(x)
+@
+\part[2]\label{part:wholeads} Write a function that finds who is leading after each roll.  The inputs are a vector for each player giving the mean value after every roll.  The output is a vector of length $n$ that gives the leader after each roll (you should use the value 1 if player 1 is leading, 2 if player 2 is leading and 3 if it is a tie).  Test your function with the input vectors $y1$ and $y2$ below:
+
+<<>>=
+y1 = c(5.00,3.50,3.67,3.50,3.20,3.33,3.43,3.25,3.56,3.50,3.55,3.50,3.46,3.43,3.53,3.69,3.65,3.72,3.74,3.85,3.76,3.77,3.70,3.67,3.64,3.69,3.63,3.71,3.69,3.73)
+y2 =  c(6.00,3.50,4.33,3.50,4.00,3.67,4.00,3.62,3.33,3.50,3.36,3.25,3.46,3.36,3.33,3.25,3.12,3.00,3.16,3.25,3.29,3.32,3.43,3.33,3.24,3.23,3.26,3.29,3.21,3.23)
+@
+<<>>=
+leader = function(p1, p2){
+  n = length(p1)
+  leadervec = rep(NA, n)
+  for(i in 1:n){
+    p1M = p1[i]
+    p2M = p2[i]
+    if(p1M > p2M){
+      leadervec[i] = 1
+    }else{
+      if(p1M < p2M){
+          leadervec[i] = 2
+      }else{
+        leadervec[i] = 3
+      }
+    }
+  }
+  return(leadervec)
+}
+leader(y1, y2)
+@
+\part[2] Write a function that finds the number of lead changes.  The function takes as input a vector giving the leader after each roll.  The output is a single value that records the number of lead changes throughout the game (this includes changes into and out of a tie).  Test your function using the input vector $z$ below:
+
+<<>>=
+z = c(1,3,2,2,2,2,2,2,2,3,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2)
+@
+<<>>=
+leadChanges = function(lvec){
+  n = length(lvec)
+  leadC = 0
+  prevL = lvec[1]
+  for(i in 2:n){
+      currL = lvec[i]
+      if(currL != prevL){
+        leadC = leadC + 1
+      }
+      prevL = currL
+  }
+  return(leadC)
+}
+leadChanges(z)
+@
+\part[3]\label{part:dierace} Write a function that simulates the entire game.  The input is the number of rolls $n$, defaulted to 30.  The output should consist of 
+\begin{itemize}
+  \item A vector for each player that gives the mean value after each roll;
+  \item A vector giving the leader after each roll;
+  \item The number of lead changes in the game.  
+\end{itemize}
+Use your function to simulate a game when $n=100$.
+
+<<>>=
+simGame = function(n=30){
+  rollvals = rolls(n)
+  p1rolls = rollvals[[1]]
+  p2rolls = rollvals[[2]]
+  p1M = findMeans(p1rolls)
+  p2M = findMeans(p2rolls)
+  leaderVec = leader(p1M, p2M)
+  leadChanges = leadChanges(leaderVec)
+  return(list(p1M, p2M, leaderVec, leadChanges))
+}
+out = simGame(100)
+out
+@
+\part[4]   Plot a line graph of mean value ($y$-axis) against the number of rolls ($x$-axis) using the output from the simulation you conducted in part (\ref{part:dierace}).   The data for the two players should be plotted in different colours.  Ensure your plot is appropriately labeled.
+
+Note: if you were unable to successfully implement the function in part (\ref{part:dierace}) you should use the mean vectors $y1$ and $y2$ given in part (\ref{part:wholeads}).
+
+<<>>=
+plot(1:100, out[[1]], type="o", col="red", main="Mean roll values vs. number of rolls", ylab="mean roll values", xlab="number of rolls")
+lines(out[[2]], type="o", col="blue")
+@
+
+\part[2]  Give a step-by-step description of how you could use the functions specified above to estimate the average number of lead changes in a $n=100$ game using simulation.
+~\\
+ - I would first define the m value and set the corresponding probability vector to size m\\
+ - I would then loop from 1 to m\\
+ - For each iteration I would simulate the rolls with n=100, then use this to find the mean roll vectors for each player, then find the current leader vector and then use this to find the number of lead changes\\
+ - Once I have found the lead changes for that iteration, I would input it into the probability vector at the current index\\
+ - Once the m iterations are complete and we have filled the probability vector, I would find the mean value of the prob vector which would give us the average number of lead changes in a n=100 game\\
+~\\
+\end{parts}
+\question The dataset \textbf{state} contains information on 50 US states and is made up of built-in datasets \textit{state.abb}, \textit{state.division} and \textit{state.x77}.
+<<>>=
+state = data.frame(state = state.abb, region = state.division, state.x77)
+@
+
+\begin{parts}
+\part[2] We wish to recode the factor variable \textit{region}.  Replace both the \textit{Pacific} and \textit{Mountain} regions by a new region: \textit{West}.
+
+<<>>=
+library(dplyr)
+levels(state$region) = c("New England", "Middle Atlantic", "South Atlantic", 
+                         "East South Central", "West South Central", "East North Central", 
+                         "West North Central", "West", "West")
+
+@
+\part[1] Add a variable to \textbf{state} called \textit{Density}.  It is given as
+  \[
+  Density = \frac{1000 \times Population}{Area}.
+  \]
+
+<<>>=
+state = mutate(state, Density = ((1000*Population)/Area))
+@
+\part[1] Find the median and interquartile range of the murder rate across all 50 states.
+
+<<>>=
+median(state$Murder)
+quantile(state$Murder)
+@
+\part[2] Find the total population of each region.
+
+<<>>=
+summarise(group_by(state, region),sum(state$Population))
+@
+\part[2]\label{part:filter} Obtain a new data frame that only features states with \textit{Population} more than 750 and \textit{Frost} less than 170.
+<<>>=
+d2 = filter(state, Population > 750 | Frost < 150)
+d2
+@
+\part[3] Regress \textit{Income} on \textit{HS.Grad}.  Find a 95\% confidence interval for the effect of graduation rate on income.  Interpret the confidence interval.
+
+<<>>=
+m1 = lm(state$Income~state$HS.Grad)
+confint(m1)
+@
+The confidence interval is between 29.83854 and 64.48606
+
+\end{parts}
+\question 
+\begin{parts}
+\part[3] State the difference between a list and a vector.  Give an example where a list is preferred over a vector.
+~\\
+ - Lists allow storage of multiple individual objects under one object name\\
+ - Vectors are only allowed to made up of a single class, whereas lists allow objects of different classes\\
+ - Each element in a list can be a vector, a matrix or another list etc\\
+ - Example below shows how vectors dont store vectors properly but lists can\\
+ EXAMPLE:\\
+<<>>=
+workingList = list(c(1,2,3), c("a", "b"))
+errorVec = c(c(1,2,3), c("a", "b"))
+workingList
+errorVec
+@
+~\\
+\part[4] We have measured the height of $30$ kahikatea trees around Otago.  We have estimated the mean tree height and used a large-sample confidence interval based on the central limit theorem.  Give step-by-step directions for how we could use simulation to estimate the coverage of the large-sample confidence interval.
+ 
+~\\
+- Set number of simulations (m)\\
+- Find true mean based on theta\\
+- Make a vector with sample sizes across the range\\
+- store the length of this vec in variable n\\
+- set a coverage vec to this size\\
+- Iterate through from 1 to n\\
+- For each iteration, find the confidence interval\\
+- Check whether the true mean is within this confidence interval\\
+- If so add 1 to index of coverage vec, otherwise 0\\
+- After we have finished iterating, we can view the coverage in a date frame\\
+~\\
+\end{parts}
+\question Researchers are interested in the number of faults in rolls of fabric as a function of the length of the roll.  The first 5 rows of the data are in the table below.
+<<echo=FALSE>>=
+Faults = c(6, 4, 17, 9, 14, 8, 5, 7, 7, 7, 6, 8, 28, 4, 10, 4, 8, 9, 23, 9, 6, 1, 9, 4, 9, 14, 17, 10, 7, 3, 9, 2)
+Length = c(551, 651, 832, 375, 715, 868, 271, 630, 491, 372, 645, 441, 895, 458, 642, 492, 543, 842, 905, 542, 522, 122, 657, 170, 738, 371, 735, 749, 495, 716, 952, 417)
+Fdata = data.frame(Faults,Length)
+@
+
+<<TBtable,echo=FALSE,results='asis'>>=
+library(xtable)
+Ftable= xtable(head(Fdata,5),caption='The number of faults in rolls of fabric as a function of the length of the roll',label='tab:Fdata',digits=0,align=rep('c',3))
+print(Ftable,include.rownames=F)
+n = nrow(Fdata)
+@
+\begin{parts}
+\part[6] Use Poisson regression via the \texttt{glm()} function to fit a model of the form:
+\[
+ \log(\lambda_i) = \beta_0 +\beta_1 x_i 
+\]
+where $\lambda_i$ is expected number of faults in a roll of length $x_i$.  Provide a brief summary of your model fit, including a plot of the expected number of faults vs roll length. This plot should include a line showing the fitted values under the model.
+<<>>=
+faults = c(6,4,17,9,14)
+length = c(551,651,832,375,715)
+fit = glm(faults~length, family=poisson)
+fit
+plot(length, faults)
+lines(length, fit$fitted.values, col="red")
+@ 
+
+% Your answer goes here
+\part[2] Use your parameter estimates from part (a) to estimate $\theta$, the value of $x_i$ when the expected number of faults is exactly 5.
+<<>>=
+logval = log(5)
+theta = (logval-beta[1])/beta[2]
+theta
+@ 
+\part[6] Use the parametric bootstrap to find a 95\% confidence interval for $\theta$.
+<<>>=
+Q <- 999
+bhatboot = matrix(NA,Q,2) 
+thetaboot = rep(NA, Q)
+
+for(i in 1:Q){
+  r = rbinom(length(faults),faults, prob=fit$fit)
+  fitboot <- glm(r~length,family=poisson)
+  bhatboot[i,] = fitboot$coef
+  thetaboot[i] = (logval-bhatboot[i,1])/bhatboot[i,2]
+}
+ci = 2*mean(thetaboot) - quantile(thetaboot, c(0.975, 0.025))
+ci
+@ 
+\part[2] Briefly explain the difference between parametric and non-parametric bootstrapping.
+~\\
+Parametric:\\
+ - Assume some parametric model for the underlying population Ftheta\\
+ - Estimate the parameters of thsi model\\
+ - Resample from this model using the estimated parameters to estimate uncertainty\\
+\\
+Non-parametric:\\
+ - Make few assumptions about the underlying distribution\\
+ - Use Fhat as an estimator for F\\
+ - Fhat is non-parametric estimator for F\\
+~\\
+\part[5]\label{part:Bayes} Use JAGS implemented through R using R2jags to redo the analysis described above. Use
+normal ${\mathcal N}$(0, 10000) (mean and variance) prior distributions for the parameters $\beta_0$ and $\beta_1$. As output, report traceplots for the parameters of the model and report statistics that provide posterior summaries.
+<<>>=
+library("R2jags")
+model = function(){
+  for(i in 1:n){
+    logit(p[i]) <- b[1]+b[2]*length[i]
+  }
+  for(i in 1:2){
+    b[i] ~ dnorm(0, 1e-04)
+  }
+  theta <- (logit(5)-b[i])/b[2]
+}
+data = c("Faults", "Length", "n")
+
+inits = function(){
+  list(b=rnorm(2, mean=beta, sd=0.1))
+}
+
+params = c("b", "theta")
+jagsfit = jags(data=data, inits, parameters.to.save = params, n.iter = 1e+05, model.file = model)
+
+traceplot(as.mcmc(jagsfit), ask=F)
+jfsum = jagsfit$BUGS$sum
+@ 
+
+\part[2] From your analysis in part (\ref{part:Bayes}), what is a 95\% credible interval for $\theta$?
+<<>>=
+theta95 = jfsum[4, c(3,7)]
+@ 
+
+\end{parts}
+\question The pdf for a random variable with support on $(0,1)$ is given by
+\[
+  f_X(x) = \left \{ \begin{array}{ll}12(x^2-x^3) & 0 \leq x \leq 1\\ \; & \;\\
+  0 & \text{otherwise}\end{array} \right .
+\]
+and with cumulative density function (cdf) given by
+\[
+  F_X(x) = \left \{ \begin{array}{ll} 0 & x < 0\\ 4x^3-3x^4 & 0 \leq x \leq 1\\ 1 & x>1 \end{array} \right .
+\]
+This distribution has a mode at 2/3.
+\begin{parts}
+\part[4] Write an \texttt{R} function called \texttt{dfx} that returns the pdf of the above distribution for any $x$.
+<<>>=
+dfx = function(x){
+  brk = x<=1
+  result = brk * (12*(x^2-x^3))
+  return(result)
+}
+@ 
+
+\part[4] Write an \texttt{R} function called \texttt{rfx} that uses rejection sampling to generate exactly $n$ samples from the above distribution with the number of samples defaulted to 1.
+<<>>=
+rfx = function(n=1){
+  M=1/sqrt(2*pi)
+  u = runif(n)
+  x=runif(n,-1.5,1.5)
+  keep=which(u<dnorm(x)/M)
+  y=x[keep]
+  return(y)
+}
+@ 
+\part[3] Use your functions to generate 10000 samples from the distribution with pdf $f_X(x)$.  Display them using an appropriately labelled histogram with 25 breaks.  You should overlay in red the corresponding probability density function.
+<<>>=
+x = rfx(1000)
+hist(x, breaks=25, prob=TRUE)
+curve(dfx(x), add=T, col="red")
+@ 
+
+\part[1] Based on your simulations what is the expected value of our random variable $\mathbb{E}[X]$?
+<<>>=
+0
+@ 
+
+\end{parts}
+\end{questions}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% End of exam %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}

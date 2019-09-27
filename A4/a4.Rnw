@@ -1,0 +1,70 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{a4wide}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{graphicx}
+
+\begin{document}
+
+<<echo=FALSE>>=
+options(width=70)
+@
+
+\title{STAT380: Assignment 4}
+\author{Ash Midgley}
+\maketitle{} 
+\doublespacing 
+
+
+\section*{Question 1} 
+
+<<>>=
+q1 = function(func, data, Q, alpha){
+  t.q <- rep(NA, Q)
+  for(q in 1:Q){
+    ysamp <- sample(data, replace = T)
+    t.q[q] <- quantile(ysamp, 0.75, names=F)
+  }
+  se <- sd(t, q)
+  ci.norm <- t.star + qnorm(quantiles.use)*se
+  ci.t <- t.star + qt(quantiles.use,n-1)*se
+  ci.perc <- quantile(t.q,quantiles.use,names=F)
+  stat_t = func(data)
+  est_bias = mean(t.q) - stat_t
+  result <- list(t.q, stat_t, est_bias, ci.norm, ci.t, ci.perc)
+  return(result);
+}
+@
+
+\newpage
+\section*{Question 2}
+\subsection*{Part 1}
+
+<<>>=
+kurtosis = function(data){
+  x = mean(data)
+  n = length(data)
+  p1 = ((n+1)*n*(n-1))/((n-2)*(n-3)) 
+  s = sum(data-x)
+  p2 = (s^4)/((s^2)^2)-3
+  p3 = ((n-1)^2)/((n-2)*(n-3))
+  t.x = (p1*p2*p3)
+  return(t.x)
+}
+@
+
+\subsection*{Part 2}
+
+<<>>=
+data("faithful")
+erupt <- faithful$eruptions
+
+bootstrp = q1(kurtosis(erupt), erupt, 999, 0.05)
+t.q = bootstrp[[1]]
+est_bias = bootstrp[[3]]
+
+hist(t.q)
+@
+
+\end{document}
